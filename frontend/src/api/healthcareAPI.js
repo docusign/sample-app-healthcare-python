@@ -16,3 +16,17 @@ export async function sendRequest(request, urlPath) {
     handleError(error);
   }
 }
+
+export async function getExtensions(urlPath) {
+  try {
+    const response = await axios.get(
+      process.env.REACT_APP_API_BASE_URL + urlPath,
+      {
+        withCredentials: true
+      }
+    );
+    return handleResponse(response);
+  } catch (error) {
+    handleError(error);
+  }
+}
