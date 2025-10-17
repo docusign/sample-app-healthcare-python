@@ -70,8 +70,11 @@ def jwt_auth(request):
     """
     Endpoint of user authorization using JWT
     """
-    auth_data = DsClient.jwt_auth()
+    try:
+        auth_data = DsClient.jwt_auth()
 
-    SessionData.set_auth_data(request.session, auth_data)
+        SessionData.set_auth_data(request.session, auth_data)
 
-    return Response({"message": "Logged in with JWT"})
+        return Response({"message": "Logged in with JWT"})
+    except Exception as err:
+        print(err.body)
