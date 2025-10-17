@@ -1,4 +1,4 @@
-from rest_framework.serializers import Serializer, CharField, EmailField, URLField
+from rest_framework.serializers import Serializer, CharField, EmailField, URLField, BooleanField
 
 class RequestMedicalRecordsSerializer(Serializer):
     name=CharField()
@@ -18,6 +18,7 @@ class ApplyForPatientAssistanceSerializer(Serializer):
     first_name=CharField()
     last_name=CharField()
     email=EmailField()
+    useWithoutExtension=BooleanField()
     return_url=URLField(
         max_length=200, min_length=None, allow_blank=False
     )
