@@ -15,6 +15,18 @@ class Extensions:
         
         return response.json()
 
+    def get_extension_app(session, appId):
+        headers = {
+            "Authorization": "Bearer " + session['access_token'],
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+
+        url = f"{CONNECTED_FIELDS_BASE_HOST}/v1/accounts/{session['account_id']}/connected-fields/tab-groups?appId={appId}"
+        response = requests.get(url, headers=headers)
+
+        return response.json()
+
     @staticmethod
     def get_address_extension_id():
         return SMARTY_EXTENSION_ID

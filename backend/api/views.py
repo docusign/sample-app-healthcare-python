@@ -115,6 +115,13 @@ def get_extension_apps(request):
         print("Required apps:")
         print(required_ids)
 
+        # Check missing apps one by one
+        missing_app_ids = [app_id for app_id in required_ids if app_id not in actual_extension_app_ids]
+        for app_id in missing_app_ids:
+            result = Extensions.get_extension_app(request.session, app_id)
+            if result and len(result) > 0 and not "code" in result:
+                actual_extension_app_ids.append(result[0]["appId"])
+
         has_all_app_ids = all(app_id in actual_extension_app_ids for app_id in required_ids)
 
         return Response({"areExtensionsPresent": has_all_app_ids})
