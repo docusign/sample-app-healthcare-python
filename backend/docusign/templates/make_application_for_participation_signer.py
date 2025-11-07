@@ -526,10 +526,12 @@ def make_application_for_participation_signer(args, session):
         document_id="1", page_number="2", x_position="456", y_position="587"
     )
 
-    if args.get("useWithoutExtension", False):
+    if args.get("useWithoutExtension", True):
         phone, address_tabs, ssn = make_tabs_without_extensions()
+        print("Not using extensions")
     else:
         phone, address_tabs, ssn = make_tabs_with_extensions(session)
+        print("Using extensions")
 
     # The Tabs object requires arrays of the different field/tab types
     signer.tabs = Tabs(
