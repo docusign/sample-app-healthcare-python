@@ -81,7 +81,6 @@ def apply_for_patient_assistance(request):
 
         template_request = Template.make_application_for_participation(args, request.session)
         template_id = Template.create(request.session, template_request)
-        print(f"Template ID: {template_id}")
 
         args["template_id"] = template_id
 
@@ -103,17 +102,12 @@ def get_extension_apps(request):
     try:
         extensions = Extensions.get_extension_apps(request.session)
         actual_extension_app_ids = [item["appId"] for item in extensions]
-        actual_apps = [{ "name": app["tabs"][0]["extensionData"]["applicationName"], "appId": app["appId"]} for app in extensions]
-        print("Installed apps:")
-        print(actual_apps)
 
         required_ids = {
             Extensions.get_address_extension_id(),
             Extensions.get_phone_extension_id(),
             Extensions.get_ssn_extension_id(),
         }
-        print("Required apps:")
-        print(required_ids)
 
         # Check missing apps one by one
         missing_app_ids = [app_id for app_id in required_ids if app_id not in actual_extension_app_ids]

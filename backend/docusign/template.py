@@ -33,7 +33,6 @@ class Template:
 
         existing_template_id = cls.get_existing(templates_api, account_id, template_request_object)
         if existing_template_id is not None:
-            print("Using the existing template.")
             return existing_template_id
 
         template = templates_api.create_template(
