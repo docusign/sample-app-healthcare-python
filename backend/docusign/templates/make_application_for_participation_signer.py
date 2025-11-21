@@ -4,10 +4,9 @@ from docusign_esign import Signer, Checkbox, Text, TabGroup, Number, Tabs, SignH
 from docusign.extensions import Extensions
 
 def make_tabs_with_extensions(session):
-    extensions = Extensions.get_extension_apps(session)
-    phone_extension = Extensions.get_extension_by_app_id(extensions, Extensions.get_phone_extension_id())
-    address_extension = Extensions.get_extension_by_app_id(extensions, Extensions.get_address_extension_id())
-    ssn_extension = Extensions.get_extension_by_app_id(extensions, Extensions.get_ssn_extension_id())
+    phone_extension = Extensions.get_extension_app(session, Extensions.get_phone_extension_id())[0]
+    address_extension = Extensions.get_extension_app(session, Extensions.get_address_extension_id())[0]
+    ssn_extension = Extensions.get_extension_app(session, Extensions.get_ssn_extension_id())[0]
 
     # define phone tab
     for tab in (t for t in phone_extension["tabs"] if "VerifyPhoneNumberInput[0].phoneNumber" in t["tabLabel"]):
