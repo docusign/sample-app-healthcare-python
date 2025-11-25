@@ -59,6 +59,16 @@ class Extensions:
             "extension_contract": extension_data["extensionContract"] if "extensionContract" in extension_data else "",
             "required_for_extension": extension_data["requiredForExtension"] if "requiredForExtension" in extension_data else "",
             "tab_label": tab["tabLabel"],
+            "connection_key": (
+                extension_data["connectionInstances"][0]["connectionKey"]
+                if "connectionInstances" in extension_data and extension_data["connectionInstances"]
+                else ""
+            ),
+            "connection_value": (
+                extension_data["connectionInstances"][0]["connectionValue"]
+                if "connectionInstances" in extension_data and extension_data["connectionInstances"]
+                else ""
+            )
         }
 
     @staticmethod
@@ -74,5 +84,11 @@ class Extensions:
             "extensionContract": verification_data["extension_contract"],
             "requiredForExtension": verification_data["required_for_extension"],
             "actionInputKey": verification_data["action_input_key"],
-            "extensionPolicy": 'MustVerifyToSign'
+            "extensionPolicy": 'MustVerifyToSign',
+            "connectionInstances": [
+                {
+                    "connectionKey": verification_data["connection_key"],
+                    "connectionValue": verification_data["connection_value"],
+                }
+            ]
         }
