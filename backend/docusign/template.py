@@ -79,12 +79,12 @@ class Template:
         return cls.make_request(template_name, document, signer)
 
     @classmethod
-    def make_application_for_participation(cls, args):
+    def make_application_for_participation(cls, args, session):
         """
         Make template_request for application_for_participation endpoint
         """
         template_name = "ApplicationForParticipationTemplate"
         document = create_document("Application_for_participation_v2.pdf")
-        signer = make_application_for_participation_signer(args)
+        signer = make_application_for_participation_signer(args, session)
 
         return cls.make_request(template_name, document, signer)

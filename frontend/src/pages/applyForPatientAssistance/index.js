@@ -5,21 +5,26 @@ import { useNavigate, useLocation } from "react-router-dom";
 import InputText from "../../components/inputText";
 import InputEmail from "../../components/inputEmail";
 import SeeMore from "../../components/seeMore";
-import { sendRequest } from "../../api/healthcareAPI";
+import ExtensionsModal from "../../components/extensionModal";
+import { getExtensions, sendRequest } from "../../api/healthcareAPI";
 import { getStatus } from "../../api/auth";
 
-const urlPath = "/apply-for-patient-assistance"
+const urlPath = "/apply-for-patient-assistance";
+const extensionsUrlPath = "/extensions";
 const returnUrl = process.env.REACT_APP_DS_RETURN_URL + "/success?1";
 
 const ApplyForPatientAssistance = props => {
     let navigate = useNavigate();
 
+    const { t: tCommon } = useTranslation("Common");
     const { t } = useTranslation("ApplyForPatientAssistance");
 
     const [ submitted, setSubmitted ] = useState(false);
     const [ formError, setFormError ] = useState([true, true, true]);
     const [ apiError, setApiError ] = useState("");
     const [ response, setResponse ] = useState(null);
+    const [ areExtensionsPresent, setAreExtensionsPresent ] = useState(false);
+    const [ showModal, setShowModal ] = useState(false);
 
     const { setBackdrop, logged, setLogged } = useContext(AppContext);
 
@@ -33,8 +38,8 @@ const ApplyForPatientAssistance = props => {
         }
 
         window.DocuSign.loadDocuSign(response.client_id).then((docusign) => {
-          const elem = document.getElementsByClassName("col form-holder mb-4")[0];
-          elem.className = "col-sm-6";
+            const elem = document.getElementsByClassName("col form-holder mb-4")[0];
+            elem.className = "col-sm-6";
             const signing = docusign.signing({
                 url: response.view_url,
                 displayFormat: "focused",
@@ -66,21 +71,31 @@ const ApplyForPatientAssistance = props => {
         getStatus(setLogged, navigate);
         setApiError("")
 
-        setSubmitted(true);
+        // setSubmitted(true);
         if (!logged) navigate("")
 
         if (!isFormValid()) return;
 
         setBackdrop(true);
+        const useWithoutExtension = sessionStorage.getItem("useWithoutExtension") === "true";
         const el = event.target.elements;
         const body = {
             first_name: el.FirstName.value,
             last_name: el.LastName.value,
             email: el.Email.value,
-            return_url: returnUrl
+            return_url: returnUrl,
+            useWithoutExtension,
         };
 
-        try{
+        try {
+            if (!useWithoutExtension) {
+                const extensions = await getExtensions(extensionsUrlPath);
+                if(extensions.data?.areExtensionsPresent === false){
+                    setAreExtensionsPresent(true);
+                    setShowModal(true);
+                    return;
+                }
+            }
             const response = await sendRequest(body, urlPath);
             setResponse(response.data);
         } catch (error) {
@@ -147,6 +162,22 @@ const ApplyForPatientAssistance = props => {
                     />
 
                 </div>
+                {areExtensionsPresent && (
+                    <ExtensionsModal
+                        show={showModal}
+                        onDownloadExtensions={
+                            () => setShowModal(false)
+                        }
+                        onHide={
+                            () => {
+                                sessionStorage.setItem("useWithoutExtension", "true");
+                                setShowModal(false);
+                            }
+                        }
+                        title={tCommon("DownloadExtensionsHeader")}
+                        message={tCommon("DownloadExtensionsMessage")}
+                    />
+                )}
             </div>
         </section>
     )

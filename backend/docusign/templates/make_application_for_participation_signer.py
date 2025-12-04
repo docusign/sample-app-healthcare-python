@@ -1,8 +1,126 @@
 from datetime import datetime
 from typing import Optional
 from docusign_esign import Signer, Checkbox, Text, TabGroup, Number, Tabs, SignHere, DateSigned, SignerAttachment
+from docusign.extensions import Extensions
 
-def make_application_for_participation_signer(args):
+def make_tabs_with_extensions(session):
+    phone_extension = Extensions.get_extension_app(session, Extensions.get_phone_extension_id())[0]
+    address_extension = Extensions.get_extension_app(session, Extensions.get_address_extension_id())[0]
+    ssn_extension = Extensions.get_extension_app(session, Extensions.get_ssn_extension_id())[0]
+
+    # define phone tab
+    for tab in (t for t in phone_extension["tabs"] if "VerifyPhoneNumberInput[0].phoneNumber" in t["tabLabel"]):
+        verification_data = Extensions.extract_verification_data(phone_extension["appId"], tab)
+        extension_data = Extensions.get_extension_data(verification_data)
+        phone = Text(
+            name = verification_data["application_name"],
+            tab_label = verification_data["tab_label"],
+            tooltip = verification_data["action_input_key"],
+            document_id = '1',
+            page_number = '1',
+            anchor_string = '/phone/',
+            anchor_units = 'pixels',
+            required = True,
+            locked = False,
+            anchor_y_offset = '-5',
+            width = "120",
+            extension_data = extension_data
+        )
+
+    # define address tabs
+    address_fields = {
+        "address": "VerifyPostalAddressInput[0].street1",
+        "country": "VerifyPostalAddressInput[0].countryOrRegion",
+        "state": "VerifyPostalAddressInput[0].subdivision",
+        "city": "VerifyPostalAddressInput[0].locality",
+        "zip": "VerifyPostalAddressInput[0].postalCode",
+    }
+    address_fields_width = {
+        "address": "150",
+        "country": "120",
+        "state": "30",
+        "city": "150",
+        "zip": "60",
+    }
+    address_tabs = []
+    for field, label_pattern in address_fields.items():
+        for tab in (t for t in address_extension["tabs"] if label_pattern in t["tabLabel"]):
+            verification_data = Extensions.extract_verification_data(address_extension["appId"], tab)
+            extension_data = Extensions.get_extension_data(verification_data)
+            address_tabs.append(Text(
+                    name = verification_data["application_name"],
+                    tab_label = verification_data["tab_label"],
+                    tooltip = verification_data["action_input_key"],
+                    document_id = "1",
+                    page_number = "1",
+                    anchor_string = f"/{field}/",
+                    anchor_units = "pixels",
+                    anchor_y_offset = '-5',
+                    required = True,
+                    locked = False,
+                    width = address_fields_width[field],
+                    extension_data = extension_data,
+                )
+            )
+
+    # define SSN tab
+    for tab in (t for t in ssn_extension["tabs"] if "VerifySocialSecurityNumberInput[0].socialSecurityNumber" in t["tabLabel"]):
+        verification_data = Extensions.extract_verification_data(ssn_extension["appId"], tab)
+        extension_data = Extensions.get_extension_data(verification_data)
+        ssn = Text(
+            name = verification_data["application_name"],
+            tab_label = verification_data["tab_label"],
+            tooltip = verification_data["action_input_key"],
+            document_id = '1',
+            page_number = '1',
+            anchor_string = '/ssn/',
+            anchor_units = 'pixels',
+            required = True,
+            locked = False,
+            anchor_y_offset = '-5',
+            extension_data = extension_data
+        )
+
+    return phone, address_tabs, ssn
+
+def make_tabs_without_extensions():
+    ssn = Text(
+        document_id="1", page_number="1", anchor_string='/ssn/', anchor_units='pixels',
+        required="true", tab_label="ssn", height="12", width="150", anchor_y_offset= "-5",
+        validation_message="SSN format: xxx-xx-xxxx",
+        validation_pattern="^[0-9]{3}-[0-9]{2}-[0-9]{4}$"
+    )
+
+    address_tabs = []
+    address_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/address/", anchor_units="pixels",
+        required="true", tab_label="address", height="12", width="150", anchor_y_offset= "-5"
+    ))
+    address_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/country/", anchor_units="pixels",
+        required="true", tab_label="country", height="12", width="120", anchor_y_offset= "-5"
+    ))
+    address_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/city/", anchor_units="pixels",
+        required="true", tab_label="city", height="12", width="150", anchor_y_offset= "-5"
+    ))
+    address_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/state/", anchor_units="pixels",
+        required="true", tab_label="state", height="12", width="30", anchor_y_offset= "-5"
+    ))
+    address_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/zip/", anchor_units="pixels",
+        required="true", tab_label="zip", height="12", width="60", anchor_y_offset= "-5"
+    ))
+
+    phone = Number(
+        document_id="1", page_number="1", anchor_string="/phone/", anchor_units="pixels",
+        required="true", tab_label="phone1", height="12", width="150", anchor_y_offset= "-5"
+    )
+
+    return phone, address_tabs, ssn
+
+def make_application_for_participation_signer(args, session):
     """
     Create signer and fields using absolute positioning
     Add the tabs model to the signer
@@ -23,34 +141,6 @@ def make_application_for_participation_signer(args):
     last_name = Text(
         document_id="1", page_number="1", x_position="231", y_position="168",
         required="true", tab_label="last_name", height="12", width="60"
-    )
-    ssn = Text(
-        document_id="1", page_number="1", x_position="399", y_position="168",
-        required="true", tab_label="ssn", height="12", width="150",
-        validation_message="SSN format: xxx-xx-xxxx",
-        validation_pattern="^[0-9]{3}-[0-9]{2}-[0-9]{4}$"
-    )
-
-    address = Text(
-        document_id="1", page_number="1", x_position="47", y_position="211",
-        required="true", tab_label="address", height="12", width="320"
-    )
-    city = Text(
-        document_id="1", page_number="1", x_position="47", y_position="251",
-        required="true", tab_label="city", height="12", width="150"
-    )
-    state = Text(
-        document_id="1", page_number="1", x_position="228", y_position="251",
-        required="true", tab_label="state", height="12", width="30"
-    )
-    zip = Text(
-        document_id="1", page_number="1", x_position="287", y_position="251",
-        required="true", tab_label="zip", height="12", width="60"
-    )
-
-    phone = Number(
-        document_id="1", page_number="1", x_position="399", y_position="210",
-        required="true", tab_label="phone1", height="12", width="150"
     )
 
     family_size = Number(
@@ -435,14 +525,18 @@ def make_application_for_participation_signer(args):
         document_id="1", page_number="2", x_position="456", y_position="587"
     )
 
+    if args.get("useWithoutExtension", True):
+        phone, address_tabs, ssn = make_tabs_without_extensions()
+    else:
+        phone, address_tabs, ssn = make_tabs_with_extensions(session)
+
     # The Tabs object requires arrays of the different field/tab types
     signer.tabs = Tabs(
-        text_tabs=[last_name, first_name, ssn, address, city, state,
-        zip, individual_assets, family_assets, asset1, asset2, asset3,
+        text_tabs=[last_name, first_name, ssn, individual_assets, family_assets, asset1, asset2, asset3,
         asset4, asset5, asset6, asset_total, last_12, income1, income2,
         income3, income4, income5, income6, income7, income8, income9,
-        income10, income11, income12, income13, income_total],
-        number_tabs=[phone, family_size],
+        income10, income11, income12, income13, income_total, phone, *address_tabs],
+        number_tabs=[family_size],
         checkbox_tabs=[
             check1, check2, check3, check4, check5, check6,
             check7, check8, check9,
