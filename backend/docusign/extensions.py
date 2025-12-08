@@ -1,4 +1,5 @@
 import requests
+from docusign_esign import ExtensionData, ConnectionInstance
 from docusign.ds_config import SMARTY_EXTENSION_ID, PHONE_EXTENSION_ID, SSN_EXTENSION_ID, CONNECTED_FIELDS_BASE_HOST
 
 class Extensions:
@@ -59,20 +60,34 @@ class Extensions:
             "extension_contract": extension_data["extensionContract"] if "extensionContract" in extension_data else "",
             "required_for_extension": extension_data["requiredForExtension"] if "requiredForExtension" in extension_data else "",
             "tab_label": tab["tabLabel"],
+            "connection_key": (
+                extension_data["connectionInstances"][0]["connectionKey"]
+                if "connectionInstances" in extension_data and extension_data["connectionInstances"]
+                else ""
+            ),
+            "connection_value": (
+                extension_data["connectionInstances"][0]["connectionValue"]
+                if "connectionInstances" in extension_data and extension_data["connectionInstances"]
+                else ""
+            )
         }
 
     @staticmethod
     def get_extension_data(verification_data):
-        return {
-            "extensionGroupId": verification_data["extension_group_id"],
-            "publisherName": verification_data["publisher_name"],
-            "applicationId": verification_data["app_id"],
-            "applicationName": verification_data["application_name"],
-            "actionName": verification_data["action_name"],
-            "actionContract": verification_data["action_contract"],
-            "extensionName": verification_data["extension_name"],
-            "extensionContract": verification_data["extension_contract"],
-            "requiredForExtension": verification_data["required_for_extension"],
-            "actionInputKey": verification_data["action_input_key"],
-            "extensionPolicy": 'MustVerifyToSign'
-        }
+        return ExtensionData(
+            extension_group_id = verification_data["extension_group_id"],
+            publisher_name = verification_data["publisher_name"],
+            application_id = verification_data["app_id"],
+            application_name = verification_data["application_name"],
+            action_name = verification_data["action_name"],
+            action_contract = verification_data["action_contract"],
+            extension_name = verification_data["extension_name"],
+            extension_contract = verification_data["extension_contract"],
+            required_for_extension = verification_data["required_for_extension"],
+            action_input_key = verification_data["action_input_key"],
+            extension_policy = 'MustVerifyToSign',
+            connection_instances = [ConnectionInstance(
+                connection_key = verification_data["connection_key"],
+                connection_value = verification_data["connection_value"],
+            )]
+        )

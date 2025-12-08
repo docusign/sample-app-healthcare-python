@@ -9,23 +9,33 @@ def make_tabs_with_extensions(session):
     ssn_extension = Extensions.get_extension_app(session, Extensions.get_ssn_extension_id())[0]
 
     # define phone tab
-    for tab in (t for t in phone_extension["tabs"] if "VerifyPhoneNumberInput[0].phoneNumber" in t["tabLabel"]):
-        verification_data = Extensions.extract_verification_data(phone_extension["appId"], tab)
-        extension_data = Extensions.get_extension_data(verification_data)
-        phone = Text(
-            name = verification_data["application_name"],
-            tab_label = verification_data["tab_label"],
-            tooltip = verification_data["action_input_key"],
-            document_id = '1',
-            page_number = '1',
-            anchor_string = '/phone/',
-            anchor_units = 'pixels',
-            required = True,
-            locked = False,
-            anchor_y_offset = '-5',
-            width = "120",
-            extension_data = extension_data
-        )
+    phone_fields = {
+        "phoneNumber": "VerifyPhoneNumberInput[0].phoneNumber",
+        "countryCode": "VerifyPhoneNumberInput[0].countryCode",
+    }
+    phone_fields_width = {
+        "phoneNumber": "90",
+        "countryCode": "30"
+    }
+    phone_tabs = []
+    for field, label_pattern in phone_fields.items():
+        for tab in (t for t in phone_extension["tabs"] if label_pattern in t["tabLabel"]):
+            verification_data = Extensions.extract_verification_data(phone_extension["appId"], tab)
+            extension_data = Extensions.get_extension_data(verification_data)
+            phone_tabs.append(Text(
+                name = verification_data["application_name"],
+                tab_label = verification_data["tab_label"],
+                tooltip = verification_data["action_input_key"],
+                document_id = '1',
+                page_number = '1',
+                anchor_string = f'/{field}/',
+                anchor_units = 'pixels',
+                required = True,
+                locked = False,
+                anchor_y_offset = '-5',
+                width = phone_fields_width[field],
+                extension_data = extension_data
+            ))
 
     # define address tabs
     address_fields = {
@@ -36,10 +46,10 @@ def make_tabs_with_extensions(session):
         "zip": "VerifyPostalAddressInput[0].postalCode",
     }
     address_fields_width = {
-        "address": "150",
+        "address": "180",
         "country": "120",
         "state": "30",
-        "city": "150",
+        "city": "120",
         "zip": "60",
     }
     address_tabs = []
@@ -64,37 +74,65 @@ def make_tabs_with_extensions(session):
             )
 
     # define SSN tab
-    for tab in (t for t in ssn_extension["tabs"] if "VerifySocialSecurityNumberInput[0].socialSecurityNumber" in t["tabLabel"]):
-        verification_data = Extensions.extract_verification_data(ssn_extension["appId"], tab)
-        extension_data = Extensions.get_extension_data(verification_data)
-        ssn = Text(
-            name = verification_data["application_name"],
-            tab_label = verification_data["tab_label"],
-            tooltip = verification_data["action_input_key"],
-            document_id = '1',
-            page_number = '1',
-            anchor_string = '/ssn/',
-            anchor_units = 'pixels',
-            required = True,
-            locked = False,
-            anchor_y_offset = '-5',
-            extension_data = extension_data
-        )
+    ssn_fields = {
+        "firstName": "VerifySocialSecurityNumberInput[0].firstName",
+        "lastName": "VerifySocialSecurityNumberInput[0].lastName",
+        "ssn": "VerifySocialSecurityNumberInput[0].socialSecurityNumber",
+        "dob": "VerifySocialSecurityNumberInput[0].dateOfBirth",
+    }
+    ssn_fields_width = {
+        "firstName": "120",
+        "lastName": "120",
+        "ssn": "120",
+        "dob": "60",
+    }
+    ssn_tabs = []
+    for field, label_pattern in ssn_fields.items():
+        for tab in (t for t in ssn_extension["tabs"] if label_pattern in t["tabLabel"]):
+            verification_data = Extensions.extract_verification_data(ssn_extension["appId"], tab)
+            extension_data = Extensions.get_extension_data(verification_data)
+            ssn_tabs.append(Text(
+                name = verification_data["application_name"],
+                tab_label = verification_data["tab_label"],
+                tooltip = verification_data["action_input_key"],
+                document_id = '1',
+                page_number = '1',
+                anchor_string = f"/{field}/",
+                anchor_units = 'pixels',
+                required = True,
+                locked = False,
+                anchor_y_offset = '-5',
+                width = ssn_fields_width[field],
+                extension_data = extension_data
+            ))
 
-    return phone, address_tabs, ssn
+    return phone_tabs, address_tabs, ssn_tabs
 
 def make_tabs_without_extensions():
-    ssn = Text(
+    ssn_tabs = []
+    ssn_tabs.append(Text(
         document_id="1", page_number="1", anchor_string='/ssn/', anchor_units='pixels',
         required="true", tab_label="ssn", height="12", width="150", anchor_y_offset= "-5",
         validation_message="SSN format: xxx-xx-xxxx",
         validation_pattern="^[0-9]{3}-[0-9]{2}-[0-9]{4}$"
-    )
+    ))
+    ssn_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string='/firstName/', anchor_units='pixels',
+        required="true", tab_label="first_name", height="12", width="120", anchor_y_offset = '-5'
+    ))
+    ssn_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string='/lastName/', anchor_units='pixels',
+        required="true", tab_label="last_name", height="12", width="120", anchor_y_offset = '-5'
+    ))
+    ssn_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string='/dob/', anchor_units='pixels',
+        required="true", tab_label="dob", height="12", width="60", anchor_y_offset = '-5'
+    ))
 
     address_tabs = []
     address_tabs.append(Text(
         document_id="1", page_number="1", anchor_string="/address/", anchor_units="pixels",
-        required="true", tab_label="address", height="12", width="150", anchor_y_offset= "-5"
+        required="true", tab_label="address", height="12", width="180", anchor_y_offset= "-5"
     ))
     address_tabs.append(Text(
         document_id="1", page_number="1", anchor_string="/country/", anchor_units="pixels",
@@ -102,7 +140,7 @@ def make_tabs_without_extensions():
     ))
     address_tabs.append(Text(
         document_id="1", page_number="1", anchor_string="/city/", anchor_units="pixels",
-        required="true", tab_label="city", height="12", width="150", anchor_y_offset= "-5"
+        required="true", tab_label="city", height="12", width="120", anchor_y_offset= "-5"
     ))
     address_tabs.append(Text(
         document_id="1", page_number="1", anchor_string="/state/", anchor_units="pixels",
@@ -113,12 +151,17 @@ def make_tabs_without_extensions():
         required="true", tab_label="zip", height="12", width="60", anchor_y_offset= "-5"
     ))
 
-    phone = Number(
-        document_id="1", page_number="1", anchor_string="/phone/", anchor_units="pixels",
-        required="true", tab_label="phone1", height="12", width="150", anchor_y_offset= "-5"
-    )
+    phone_tabs = []
+    phone_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/countryCode/", anchor_units="pixels",
+        required="true", tab_label="countryCode1", height="12", width="30", anchor_y_offset= "-5",
+    ))
+    phone_tabs.append(Text(
+        document_id="1", page_number="1", anchor_string="/phoneNumber/", anchor_units="pixels",
+        required="true", tab_label="phone1", height="12", width="90", anchor_y_offset= "-5",
+    ))
 
-    return phone, address_tabs, ssn
+    return phone_tabs, address_tabs, ssn_tabs
 
 def make_application_for_participation_signer(args, session):
     """
@@ -134,15 +177,6 @@ def make_application_for_participation_signer(args, session):
     )
 
     # Create fields
-    first_name = Text(
-        document_id="1", page_number="1", x_position="45", y_position="168",
-        required="true", tab_label="first_name", height="12", width="60"
-    )
-    last_name = Text(
-        document_id="1", page_number="1", x_position="231", y_position="168",
-        required="true", tab_label="last_name", height="12", width="60"
-    )
-
     family_size = Number(
         document_id="1", page_number="1", x_position="399", y_position="252",
         required="true", tab_label="family_size", height="12", width="30"
@@ -526,16 +560,16 @@ def make_application_for_participation_signer(args, session):
     )
 
     if args.get("useWithoutExtension", True):
-        phone, address_tabs, ssn = make_tabs_without_extensions()
+        phone_tabs, address_tabs, ssn_tabs = make_tabs_without_extensions()
     else:
-        phone, address_tabs, ssn = make_tabs_with_extensions(session)
+        phone_tabs, address_tabs, ssn_tabs = make_tabs_with_extensions(session)
 
     # The Tabs object requires arrays of the different field/tab types
     signer.tabs = Tabs(
-        text_tabs=[last_name, first_name, ssn, individual_assets, family_assets, asset1, asset2, asset3,
+        text_tabs=[individual_assets, family_assets, asset1, asset2, asset3,
         asset4, asset5, asset6, asset_total, last_12, income1, income2,
         income3, income4, income5, income6, income7, income8, income9,
-        income10, income11, income12, income13, income_total, phone, *address_tabs],
+        income10, income11, income12, income13, income_total, *phone_tabs, *address_tabs, *ssn_tabs],
         number_tabs=[family_size],
         checkbox_tabs=[
             check1, check2, check3, check4, check5, check6,
