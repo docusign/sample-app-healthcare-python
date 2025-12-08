@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from docusign.template import Template
 from docusign.envelope import Envelope
 from docusign.workflow import get_idv_workflow, is_sms_workflow
+from docusign.extensions import Extensions
 
 from .serializers import (
     RequestMedicalRecordsSerializer,
@@ -72,19 +73,51 @@ def apply_for_patient_assistance(request):
     """
     The Apply for Patient Assistance flow
     """
-    serializer = ApplyForPatientAssistanceSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
+    try:
+        serializer = ApplyForPatientAssistanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    args = serializer.validated_data.copy()
+        args = serializer.validated_data.copy()
 
-    template_request = Template.make_application_for_participation(args)
-    template_id = Template.create(request.session, template_request)
+        template_request = Template.make_application_for_participation(args, request.session)
+        template_id = Template.create(request.session, template_request)
 
-    args["template_id"] = template_id
+        args["template_id"] = template_id
 
-    envelope_definition = Envelope.create_application_for_participation_definition(args)
+        envelope_definition = Envelope.create_application_for_participation_definition(args)
 
-    envelope_id = Envelope.send(request.session, envelope_definition)
-    view_url = Envelope.get_view_url(request.session, envelope_id, args)
+        envelope_id = Envelope.send(request.session, envelope_definition)
+        view_url = Envelope.get_view_url(request.session, envelope_id, args)
 
-    return Response({"view_url": view_url, "client_id": os.environ.get('CLIENT_ID')})
+        return Response({"view_url": view_url, "client_id": os.environ.get('CLIENT_ID')})
+    except Exception as err:
+        print(err)
+
+@api_view(['GET'])
+@error_processing
+def get_extension_apps(request):
+    """
+    Retrieve the list of extensions
+    """
+    try:
+        extensions = Extensions.get_extension_apps(request.session)
+        actual_extension_app_ids = [item["appId"] for item in extensions]
+
+        required_ids = {
+            Extensions.get_address_extension_id(),
+            Extensions.get_phone_extension_id(),
+            Extensions.get_ssn_extension_id(),
+        }
+
+        # Check missing apps one by one
+        missing_app_ids = [app_id for app_id in required_ids if app_id not in actual_extension_app_ids]
+        for app_id in missing_app_ids:
+            result = Extensions.get_extension_app(request.session, app_id)
+            if result and len(result) > 0 and not "code" in result:
+                actual_extension_app_ids.append(result[0]["appId"])
+
+        has_all_app_ids = all(app_id in actual_extension_app_ids for app_id in required_ids)
+
+        return Response({"areExtensionsPresent": has_all_app_ids})
+    except Exception as err:
+        print(err)

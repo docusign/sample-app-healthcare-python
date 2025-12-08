@@ -22,7 +22,7 @@ const SeeMore = props => {
     return (
         <div className="col bs-holder">
             <p>
-                <a id="seemore" className="bs-link" data-toggle="collapse" href="#collapseSeeMore" role="button" aria-expanded="false"
+                <a id="seemore" className="bs-link" data-bs-toggle="collapse" href="#collapseSeeMore" role="button" aria-expanded="false"
                     aria-controls="collapseSeeMore">
                     <img id='rightCaret' style={{'margin-right':'10px', 'margin-bottom':'5px'}} src={right_caret} alt='right caret' width='20' height='20'></img>
                     <img hidden id='downCaret' style={{'margin-right':'10px', 'margin-bottom':'5px'}} src={down_caret} alt='right caret' width='20' height='20'></img>
