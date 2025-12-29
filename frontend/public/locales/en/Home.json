@@ -3,7 +3,7 @@
     "P1": "Welcome to the ",
     "P2": "Healthcare Sample App"
   },
-  "Header2": "A self-service patient portal",
+  "Header2": "A self-service patient portal that authenticates users and securely accesses healthcare records using Authorization Code Grant (ACG) and JWT authentication.",
 
   "Card1": {
     "Title": "Request Medical Records",
