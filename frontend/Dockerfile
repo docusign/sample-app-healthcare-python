@@ -1,4 +1,4 @@
-FROM node:12.22.2
+FROM node:26.12.1
 
 USER root
 WORKDIR /frontend
@@ -11,7 +11,7 @@ ARG REACT_APP_API_BASE_URL
 ENV REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
 
 RUN npm install
-RUN npm build
+RUN npm run build
 
 EXPOSE 3000
 
